@@ -10,7 +10,7 @@ import Foundation
 
 struct SetGame {
     
-    private(set) var cards = [SetCard]()
+    var cards = [SetCard]()
     
     init() {
         for number in SetCard.Number.all {
@@ -22,7 +22,6 @@ struct SetGame {
                 }
             }
         }
-        
         // Shuffe cards
         var shuffledCards = [SetCard]()
         
@@ -35,6 +34,22 @@ struct SetGame {
         }
         
         cards = shuffledCards
+    }
+    
+    func matchCards(card1: SetCard, card2: SetCard,card3: SetCard) -> Bool {
+//        if !satisfySetRules(a: card1.number, b: card2.number, c: card3.number) { return false }
+//        if !satisfySetRules(a: card1.color, b: card2.color, c: card3.color) { return false }
+//        if !satisfySetRules(a: card1.shading, b: card2.shading, c: card3.shading) { return false }
+//        if !satisfySetRules(a: card1.symbol, b: card2.symbol, c: card3.symbol) { return false }
+        return true
+    }
+    
+    private func satisfySetRules<T>(a:T, b:T, c:T) -> Bool where T:Equatable {
+        if a == b && b == c {
+            return true
+        } else if a != b && b != c && c != a {
+            return true
+        } else { return false }
     }
 }
 

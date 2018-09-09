@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct SetCard {
+struct SetCard: Equatable {
     
     let number: Number
     let symbol: Symbol
