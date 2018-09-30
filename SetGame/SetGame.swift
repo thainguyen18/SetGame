@@ -11,6 +11,17 @@ import Foundation
 struct SetGame {
     
     var cards = [SetCard]()
+    var cardsOnScreen = [SetCard]()
+    var matchedCards = [SetCard]()
+    var selectedCards = [SetCard]()
+    
+    var isThereAMatch: Bool {
+        return matchCards(cards:selectedCards)
+    }
+    
+    var score: Int {
+        return matchedCards.count / 3
+    }
     
     init() {
         for number in SetCard.Number.all {
@@ -22,26 +33,58 @@ struct SetGame {
                 }
             }
         }
-        // Shuffe cards
-        var shuffledCards = [SetCard]()
-        
-        for _ in 0..<cards.count {
-            if cards.count > 0 {
-                let randomIndex = cards.count.arc4random
-                shuffledCards.append(cards[randomIndex])
-                cards.remove(at: randomIndex)
-            }
-        }
-        
-        cards = shuffledCards
     }
     
-    func matchCards(card1: SetCard, card2: SetCard,card3: SetCard) -> Bool {
-//        if !satisfySetRules(a: card1.number, b: card2.number, c: card3.number) { return false }
-//        if !satisfySetRules(a: card1.color, b: card2.color, c: card3.color) { return false }
-//        if !satisfySetRules(a: card1.shading, b: card2.shading, c: card3.shading) { return false }
-//        if !satisfySetRules(a: card1.symbol, b: card2.symbol, c: card3.symbol) { return false }
-        return true
+    // Draw random card
+    mutating func draw() -> SetCard? {
+        
+        if cards.count > 0 {
+            
+            let randomIndex = cards.count.arc4random
+            let card = cards.remove(at: randomIndex)
+            cardsOnScreen.append(card)
+            return card
+            
+        } else { return nil }
+    }
+    
+    
+    func canStillDrawCards() -> Bool {
+        return cards.count > 0
+    }
+    
+    mutating func removeCardOnScreen(card: SetCard) {
+        if let index = cardsOnScreen.index(of: card) {
+            cardsOnScreen.remove(at: index)
+        }
+    }
+    
+    mutating func addCardToMatched(card: SetCard) {
+        matchedCards.append(card)
+    }
+    
+    func matchCards(cards: [SetCard]) -> Bool {
+        if cards.count == 3 {
+            if !satisfySetRules(a: cards[0].number, b: cards[1].number, c: cards[2].number) {return false}
+            if !satisfySetRules(a: cards[0].color, b: cards[1].color, c: cards[2].color) {return false}
+            if !satisfySetRules(a: cards[0].shading, b: cards[1].shading, c: cards[2].shading) {return false}
+            if !satisfySetRules(a: cards[0].symbol, b: cards[1].symbol, c: cards[2].symbol) {return false}
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    func hintCard() -> SetCard? {
+        var hintCard: SetCard?
+        if selectedCards.count == 2 {
+            for card in cardsOnScreen {
+                if matchCards(cards: [selectedCards[0],selectedCards[1], card]) {
+                    hintCard = card
+                }
+            }
+        }
+        return hintCard
     }
     
     private func satisfySetRules<T>(a:T, b:T, c:T) -> Bool where T:Equatable {

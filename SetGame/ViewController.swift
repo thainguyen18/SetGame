@@ -22,7 +22,16 @@ class ViewController: UIViewController {
         }
     }
     
+    private var selectedButtons = [UIButton]()
+ 
+    private var CardForButton = [UIButton:SetCard]()
+    
     @IBOutlet weak var DealMoreButton: UIButton!
+    
+    @IBOutlet weak var hintButton: UIButton!
+    
+    @IBOutlet weak var scoreLabel: UILabel!
+        
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,139 +41,157 @@ class ViewController: UIViewController {
         for _ in 1...12 {
             addCard()
         }
+        
+        // Initially hide hint card
+        hintButton.isHidden = true
+    }
+    
+    @IBAction func showHintCard() {
+        if let hintCard = game.hintCard() {
+            if let hintButton = CardForButton.keys.filter({CardForButton[$0] == hintCard}).first {
+                hintButton.layer.borderColor = UIColor.magenta.cgColor
+                hintButton.layer.borderWidth = 3.0
+            }
+        }
     }
     
     @IBAction func dealMoreCards() {
-        if !isThereAMatch {
+        if !game.isThereAMatch {
             for _ in 0...2 {
                 addCard()
             }
+            shouldShowHintButton()
         } else {
-            // if a matched set, replace or hide them
-            if (game.cards.count > 0) { //Replace cards
-                removeItems(of: cardSetToMatch, from: &CardsOnScreen)
-                for i in selectedCards.indices { selectedCards[i].removeFromSuperview() }
-                removeItems(of: selectedCards, from: &buttons)
+            replaceOrHideMatchedCards()
+            if (game.canStillDrawCards()) {
                 for _ in 0...2 {
                     addCard()
                 }
-            } else { // Hide cards
-                removeItems(of: cardSetToMatch, from: &CardsOnScreen)
-                for i in selectedCards.indices { selectedCards[i].isHidden = true }
-                removeItems(of: selectedCards, from: &buttons)
             }
-            deselectAll()
         }
     }
     
-    private var cardSetToMatch = [SetCard]() {
-        didSet {
-            if cardSetToMatch.count == 3 {
-                updateUIForMatch(isMatched:game.matchCards(card1: cardSetToMatch[0], card2: cardSetToMatch[1], card3: cardSetToMatch[2]))
-            }
-        }
-    }
     
     private func updateUIForMatch(isMatched: Bool) {
         if isMatched {
-            for index in 0...selectedCards.count - 1 {
-                selectedCards[index].layer.borderColor = UIColor.green.cgColor
-                selectedCards[index].layer.borderWidth = 3.0
+            for index in 0...selectedButtons.count - 1 {
+                selectedButtons[index].layer.borderColor = UIColor.green.cgColor
+                selectedButtons[index].layer.borderWidth = 3.0
             }
         } else {
-            for index in 0...selectedCards.count - 1 {
-                selectedCards[index].layer.borderColor = UIColor.red.cgColor
-                selectedCards[index].layer.borderWidth = 3.0
+            for index in 0...selectedButtons.count - 1 {
+                selectedButtons[index].layer.borderColor = UIColor.red.cgColor
+                selectedButtons[index].layer.borderWidth = 3.0
             }
         }
     }
     
-    private func deselectAll() {
-        for button in selectedCards {
-            button.layer.borderWidth = 0.0
-        }
-        selectedCards.removeAll()
-        cardSetToMatch.removeAll()
-    }
     
-    private var selectedCards = [UIButton]()
-    
-    @objc private func touchCard(button: UIButton) {
-        switch selectedCards.count {
-            case 0:
-                selectCard(card: button)
-            case 1,2:
-                if selectedCards.contains(button) {
-                    deselectCard(card: button)
+    @objc private func touchCardButton(button: UIButton) {
+        switch selectedButtons.count {
+            case 0,1:
+                if selectedButtons.contains(button) {
+                    deselectButton(cardButton: button)
+                    
                 } else {
-                    selectCard(card: button)
+                    selectButton(cardButton: button)
+                }
+            case 2:
+                if selectedButtons.contains(button) {
+                    deselectButton(cardButton: button)
+                    
+                } else {
+                    selectButton(cardButton: button)
+                    
+                    updateUIForMatch(isMatched: game.isThereAMatch)
                 }
             case 3:
                 // If these cards are not a match
-                if !game.matchCards(card1: cardSetToMatch[0], card2: cardSetToMatch[1], card3: cardSetToMatch[2]) {
+                if !game.isThereAMatch {
                     deselectAll()
-                    selectCard(card: button)
+                    selectButton(cardButton: button)
                 } else {
                     // if a matched set, replace or hide them
-                    if !selectedCards.contains(button) {
-                        if (game.cards.count > 0) { //Replace cards
-                            
-                            removeItems(of: cardSetToMatch, from: &CardsOnScreen)
-                            for i in selectedCards.indices { selectedCards[i].removeFromSuperview() }
-                            removeItems(of: selectedCards, from: &buttons)
-                            dealMoreCards()
-                        } else { // Hide cards
-                            removeItems(of: cardSetToMatch, from: &CardsOnScreen)
-                            for i in selectedCards.indices { selectedCards[i].isHidden = true }
-                            removeItems(of: selectedCards, from: &buttons)
-                        }
-                        deselectAll()
-                        selectCard(card: button)
+                    if !selectedButtons.contains(button) {
+                        replaceOrHideMatchedCards()
+                        if (game.canStillDrawCards()) { dealMoreCards() }
+                        selectButton(cardButton: button)
                     }
                 }
             default: break
         }
     }
     
-    private var isThereAMatch: Bool {
-        get {
-            if cardSetToMatch.count != 3 {
-                return false
-            }
-            return game.matchCards(card1: cardSetToMatch[0], card2: cardSetToMatch[1], card3: cardSetToMatch[2])
+    private func replaceOrHideMatchedCards() {
+        if (game.canStillDrawCards()) { //Replace cards
             
-        }
-    }
-    
-    private func removeItems<T>(of array1:[T], from array2:inout [T]) where T:Equatable {
-        if array1.count <= array2.count {
-            for i in 0...array1.count - 1{
-                if let index = array2.index(of: array1[i]) {
-                    array2.remove(at: index)
+            for button in selectedButtons {
+                button.removeFromSuperview()
+                if let setCard = CardForButton[button] {
+                    game.removeCardOnScreen(card: setCard)
+                    game.addCardToMatched(card: setCard)
+                }
+                if let index = buttons.index(of:button) {
+                    buttons.remove(at: index)
+                }
+            }
+        } else { // Hide cards
+            
+            for button in selectedButtons {
+                button.isHidden = true
+                if let setCard = CardForButton[button] {
+                    game.removeCardOnScreen(card: setCard)
+                    game.addCardToMatched(card: setCard)
+                }
+                if let index = buttons.index(of:button) {
+                    buttons.remove(at: index)
                 }
             }
         }
-    }
-    
-    private func selectCard(card: UIButton) {
-        card.layer.borderColor = UIColor.blue.cgColor
-        card.layer.borderWidth = 3.0
+        deselectAll()
         
-        selectedCards.append(card)
-        if let idIndex = buttons.index(of: card) {
-            cardSetToMatch.append(CardsOnScreen[idIndex])
+        // Update score
+        scoreLabel.text = "Score: \(game.score)"
+    }
+    
+    private func selectButton(cardButton: UIButton) {
+        cardButton.layer.borderColor = UIColor.blue.cgColor
+        cardButton.layer.borderWidth = 3.0
+        
+        selectedButtons.append(cardButton)
+        
+        if let card = CardForButton[cardButton] {
+            game.selectedCards.append(card)
+        }
+        shouldShowHintButton()
+    }
+    
+    private func shouldShowHintButton() {
+        if let _ = game.hintCard() {
+            hintButton.isHidden = false
+        } else {
+            hintButton.isHidden = true
         }
     }
     
-    private func deselectCard(card: UIButton) {
-        card.layer.borderWidth = 0.0
-        if let index = selectedCards.index(of: card) {
-            selectedCards.remove(at: index)
-            cardSetToMatch.remove(at: index)
+    private func deselectButton(cardButton: UIButton) {
+        cardButton.layer.borderWidth = 0.0
+        if let index = selectedButtons.index(of: cardButton) {
+            selectedButtons.remove(at: index)
+        }
+        if let card = CardForButton[cardButton], let index = game.selectedCards.index(of:card) {
+            game.selectedCards.remove(at: index)
         }
     }
     
-    private var CardsOnScreen = [SetCard]()
+    private func deselectAll() {
+        for button in buttons {
+            button.layer.borderWidth = 0.0
+        }
+        selectedButtons.removeAll()
+        game.selectedCards.removeAll()
+    }
+    
     
     private func addCard() {
         
@@ -173,30 +200,31 @@ class ViewController: UIViewController {
             return
         }
         
-        let setCard = game.cards.removeFirst()
-        
-        if game.cards.isEmpty { self.DealMoreButton.isHidden = true }
-        
-        let button = UIButton(type: .system)
-        button.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-        button.layer.cornerRadius = 8.0
-        button.setAttributedTitle(self.makeCardUI(card: setCard), for: UIControlState.normal)
-        button.addTarget(self, action: #selector(self.touchCard), for: UIControlEvents.touchUpInside)
-        
-        var randomButtonrect:CGRect?
-        
-        repeat {
-            randomButtonrect = getRandomRect()
-        } while randomButtonrect == nil
-        
-        if let rect = randomButtonrect {
-            button.frame = rect
+        if let setCard = game.draw() {
             
-            self.view.addSubview(button)
+            if game.cards.isEmpty { self.DealMoreButton.isHidden = true }
             
-            self.buttons.append(button)
+            let button = UIButton(type: .system)
+            button.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+            button.layer.cornerRadius = 8.0
+            button.setAttributedTitle(self.makeCardUI(card: setCard), for: UIControl.State.normal)
+            button.addTarget(self, action: #selector(self.touchCardButton), for: UIControl.Event.touchUpInside)
             
-            self.CardsOnScreen.append(setCard)
+            var randomButtonrect:CGRect?
+            
+            repeat {
+                randomButtonrect = getRandomRect()
+            } while randomButtonrect == nil
+            
+            if let rect = randomButtonrect {
+                button.frame = rect
+                
+                self.view.addSubview(button)
+                
+                self.buttons.append(button)
+                
+                CardForButton.updateValue(setCard, forKey: button)
+            }
         }
     }
     
@@ -215,7 +243,7 @@ class ViewController: UIViewController {
     }
     
     private func makeCardUI(card:SetCard) -> NSAttributedString {
-        var attributes = [NSAttributedStringKey:Any]()
+        var attributes = [NSAttributedString.Key:Any]()
         attributes.updateValue(UIFont.systemFont(ofSize: 14.0), forKey: .font)
         
         var cardColor:UIColor

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -50,6 +50,14 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wC6-Hx-cgz">
+                                <rect key="frame" x="255" y="617" width="30" height="30"/>
+                                <color key="backgroundColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <state key="normal" title="Hint"/>
+                                <connections>
+                                    <action selector="showHintCard" destination="BYZ-38-t0r" eventType="touchUpInside" id="FKZ-62-jp4"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="0.13333" green="0.13333" blue="0.13333" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -57,15 +65,20 @@
                             <constraint firstItem="csh-bx-dGh" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" symbolic="YES" id="Kvc-cz-euq"/>
                             <constraint firstItem="uIH-Le-5Be" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="MY6-9z-EtV"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="uIH-Le-5Be" secondAttribute="bottom" constant="20" id="N69-jd-1lD"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="wC6-Hx-cgz" secondAttribute="bottom" constant="20" id="XaN-dr-oGD"/>
                             <constraint firstItem="WNE-Pc-d8d" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="Ya3-KR-Pfi"/>
                             <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="uIH-Le-5Be" secondAttribute="trailing" constant="20" symbolic="YES" id="cQC-Dn-Mye"/>
+                            <constraint firstItem="wC6-Hx-cgz" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="WNE-Pc-d8d" secondAttribute="trailing" constant="10" id="cWh-IK-WfY"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="csh-bx-dGh" secondAttribute="trailing" constant="20" id="e5z-vs-5yb"/>
+                            <constraint firstItem="csh-bx-dGh" firstAttribute="leading" secondItem="wC6-Hx-cgz" secondAttribute="trailing" constant="20" id="jcZ-lv-CIN"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="csh-bx-dGh" secondAttribute="bottom" constant="20" id="rlI-l4-CAa"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
                         <outlet property="DealMoreButton" destination="WNE-Pc-d8d" id="VBB-Sc-KAy"/>
+                        <outlet property="hintButton" destination="wC6-Hx-cgz" id="toD-Yc-wLV"/>
+                        <outlet property="scoreLabel" destination="uIH-Le-5Be" id="mzg-zK-P8j"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
