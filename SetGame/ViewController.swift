@@ -12,9 +12,9 @@ class ViewController: UIViewController {
 
     lazy var game = SetGame()
     
-    private var buttons = [UIButton]() {
+    private var buttons = [SetCardView]() {
         didSet {
-            if buttons.count >= 24 {
+            if !game.canStillDrawCards() {
                 self.DealMoreButton.isHidden = true
             } else {
                 self.DealMoreButton.isHidden = false
@@ -22,16 +22,22 @@ class ViewController: UIViewController {
         }
     }
     
-    private var selectedButtons = [UIButton]()
+    private var selectedButtons = [SetCardView]()
  
-    private var CardForButton = [UIButton:SetCard]()
+    private var CardForButton = [SetCardView:SetCard]()
     
     @IBOutlet weak var DealMoreButton: UIButton!
     
     @IBOutlet weak var hintButton: UIButton!
     
     @IBOutlet weak var scoreLabel: UILabel!
+    
+    @IBOutlet weak var cardsHolderView: UIView!
+    
+    @IBOutlet weak var newGameButton: UIButton!
         
+    
+    private var grid = Grid(layout: .aspectRatio(3.0/5.0))
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,6 +50,50 @@ class ViewController: UIViewController {
         
         // Initially hide hint card
         hintButton.isHidden = true
+        
+        // Set up gestures
+        setUpSwipeGesture()
+        setUpRotationGesture()
+        
+        newGameButton.addTarget(self, action: #selector(self.touchNewGame), for: UIControl.Event.touchUpInside)
+    }
+    
+    @objc private func touchNewGame() {
+        print("Touch new game")
+        
+        selectedButtons.removeAll()
+        
+        for index in buttons.indices {
+            buttons[index].removeFromSuperview()
+        }
+        
+        buttons.removeAll()
+        
+        game = SetGame() // Create new game object
+        
+        // Start game with 12 cards
+        for _ in 1...12 {
+            addCard()
+        }
+    }
+    
+    private func setUpSwipeGesture() {
+        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(self.dealMoreCards))
+        swipeDown.direction = .down
+        self.view.addGestureRecognizer(swipeDown)
+    }
+    
+    private func setUpRotationGesture() {
+        let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(self.shuffleCards))
+        self.view.addGestureRecognizer(rotationGesture)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        grid.frame = self.cardsHolderView.frame
+        
+        reLayoutCards()
     }
     
     @IBAction func showHintCard() {
@@ -87,23 +137,17 @@ class ViewController: UIViewController {
     }
     
     
-    @objc private func touchCardButton(button: UIButton) {
+    @objc private func touchCardButton(button: SetCardView) {
         switch selectedButtons.count {
-            case 0,1:
+            case 0,1,2:
                 if selectedButtons.contains(button) {
                     deselectButton(cardButton: button)
                     
                 } else {
                     selectButton(cardButton: button)
-                }
-            case 2:
-                if selectedButtons.contains(button) {
-                    deselectButton(cardButton: button)
-                    
-                } else {
-                    selectButton(cardButton: button)
-                    
-                    updateUIForMatch(isMatched: game.isThereAMatch)
+                    if selectedButtons.count == 3 {
+                        updateUIForMatch(isMatched: game.isThereAMatch)
+                    }
                 }
             case 3:
                 // If these cards are not a match
@@ -123,38 +167,29 @@ class ViewController: UIViewController {
     }
     
     private func replaceOrHideMatchedCards() {
-        if (game.canStillDrawCards()) { //Replace cards
-            
-            for button in selectedButtons {
-                button.removeFromSuperview()
-                if let setCard = CardForButton[button] {
-                    game.removeCardOnScreen(card: setCard)
-                    game.addCardToMatched(card: setCard)
-                }
-                if let index = buttons.index(of:button) {
-                    buttons.remove(at: index)
-                }
+        
+        for button in selectedButtons {
+            if let setCard = CardForButton[button] {
+                game.removeCardOnScreen(card: setCard)
+                game.addCardToMatched(card: setCard)
             }
-        } else { // Hide cards
-            
-            for button in selectedButtons {
-                button.isHidden = true
-                if let setCard = CardForButton[button] {
-                    game.removeCardOnScreen(card: setCard)
-                    game.addCardToMatched(card: setCard)
-                }
-                if let index = buttons.index(of:button) {
-                    buttons.remove(at: index)
-                }
+            if let index = buttons.index(of:button) {
+                buttons.remove(at: index)
+            }
+            if (game.canStillDrawCards()) { //Replace cards
+                button.removeFromSuperview()
+            } else {
+                button.removeFromSuperview() // Or hide cards and relayout
+                reLayoutCards()
             }
         }
         deselectAll()
-        
+            
         // Update score
         scoreLabel.text = "Score: \(game.score)"
     }
     
-    private func selectButton(cardButton: UIButton) {
+    private func selectButton(cardButton: SetCardView) {
         cardButton.layer.borderColor = UIColor.blue.cgColor
         cardButton.layer.borderWidth = 3.0
         
@@ -174,7 +209,7 @@ class ViewController: UIViewController {
         }
     }
     
-    private func deselectButton(cardButton: UIButton) {
+    private func deselectButton(cardButton: SetCardView) {
         cardButton.layer.borderWidth = 0.0
         if let index = selectedButtons.index(of: cardButton) {
             selectedButtons.remove(at: index)
@@ -182,6 +217,7 @@ class ViewController: UIViewController {
         if let card = CardForButton[cardButton], let index = game.selectedCards.index(of:card) {
             game.selectedCards.remove(at: index)
         }
+        shouldShowHintButton()
     }
     
     private func deselectAll() {
@@ -193,54 +229,76 @@ class ViewController: UIViewController {
     }
     
     
-    private func addCard() {
+    @objc private func shuffleCards() {
+        deselectAll()
         
-        if buttons.count >= 24 {
-            print("Table is full of cards, please match some!")
-            return
+        let noOfCardsOnScreen = buttons.count
+        
+        for index in self.buttons.indices {
+            buttons[index].removeFromSuperview()
         }
+        
+        buttons.removeAll()
+        
+        game.shuffleDeck()
+        
+        for _ in 1...noOfCardsOnScreen {
+            self.addCard()
+        }
+        
+        shouldShowHintButton()
+    }
+    
+    private func addCard() {
         
         if let setCard = game.draw() {
             
             if game.cards.isEmpty { self.DealMoreButton.isHidden = true }
             
-            let button = UIButton(type: .system)
-            button.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-            button.layer.cornerRadius = 8.0
-            button.setAttributedTitle(self.makeCardUI(card: setCard), for: UIControl.State.normal)
-            button.addTarget(self, action: #selector(self.touchCardButton), for: UIControl.Event.touchUpInside)
+//            let button = UIButton(type: .system)
+//            button.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+//            button.layer.cornerRadius = 8.0
+//            button.setAttributedTitle(self.makeCardUI(card: setCard), for: UIControl.State.normal)
+//            button.addTarget(self, action: #selector(self.touchCardButton), for: UIControl.Event.touchUpInside)
             
-            var randomButtonrect:CGRect?
+            let button = SetCardView()
+            button.setCard = setCard
+            button.backgroundColor = UIColor.white
+            let tap = UITapGestureRecognizer(target: self, action: #selector(self.touchAction(_:)))
+            button.isUserInteractionEnabled = true
+            button.addGestureRecognizer(tap)
             
-            repeat {
-                randomButtonrect = getRandomRect()
-            } while randomButtonrect == nil
             
-            if let rect = randomButtonrect {
-                button.frame = rect
-                
-                self.view.addSubview(button)
-                
-                self.buttons.append(button)
-                
-                CardForButton.updateValue(setCard, forKey: button)
+            self.buttons.append(button)
+            
+            CardForButton.updateValue(setCard, forKey: button)
+            
+            reLayoutCards()
+        }
+    }
+    
+    @objc private func touchAction(_ sender: UITapGestureRecognizer) {
+        if let cardView = sender.view as? SetCardView {
+            self.touchCardButton(button: cardView)
+        }
+    }
+
+    
+    func reLayoutCards() {
+        
+        grid.cellCount = buttons.count // Relayout frames for cards
+        
+        let offsetX = self.view.frame.origin.x - self.grid.frame.origin.x
+        let offsetY = self.view.frame.origin.y - self.grid.frame.origin.y
+        
+        for index in self.buttons.indices {
+            if let cellFrame = grid[index] {
+                buttons[index].frame = cellFrame.offsetBy(dx: offsetX, dy: offsetY).inset(by: UIEdgeInsets(top: 2.0, left: 2.0, bottom: 2.0, right: 2.0))
+                self.cardsHolderView.addSubview(buttons[index])
             }
         }
     }
     
-    private func getRandomRect() -> CGRect? {
-        let marginRect = CGRect(x: self.view.frame.origin.x + 20.0, y: self.view.frame.origin.y + 40.0, width: self.view.frame.size.width - 35.0, height: self.view.frame.size.height - 70.0)
-        
-        let randomRect = CGRect(x: CGFloat(Double.random0and1) * marginRect.size.width + 20.0, y: CGFloat(Double.random0and1) * marginRect.size.height + 40.0, width: 50.0, height: 70.0)
-        
-        if (buttons.filter {$0.frame.intersects(randomRect)}.count > 0) {
-            return nil
-        }
-        if (!marginRect.contains(randomRect)) {
-            return nil
-        }
-        return randomRect
-    }
     
     private func makeCardUI(card:SetCard) -> NSAttributedString {
         var attributes = [NSAttributedString.Key:Any]()
@@ -297,6 +355,12 @@ class ViewController: UIViewController {
 extension Double {
     public static var random0and1:Double {
         return Double(arc4random()) / 0xFFFFFFFF
+    }
+}
+
+extension CGRect {
+    func offsetBy(dx: CGFloat, dy: CGFloat) -> CGRect {
+        return CGRect(x: self.origin.x + dx, y: self.origin.y + dy, width: self.size.width, height: self.size.height)
     }
 }
 

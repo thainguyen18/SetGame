@@ -48,6 +48,12 @@ struct SetGame {
         } else { return nil }
     }
     
+    // Shuffle cards on screen with decks and return new deck with same number of cards
+    mutating func shuffleDeck() {
+
+        cards = cards + cardsOnScreen
+    }
+    
     
     func canStillDrawCards() -> Bool {
         return cards.count > 0

@@ -22,6 +22,13 @@ struct SetCard: Equatable {
         self.color = color
     }
     
+    init() { // Default
+        self.number = .one
+        self.symbol = .circle
+        self.shading = .open
+        self.color = .black
+    }
+    
     enum Number: Int {
         case one = 1
         case two = 2

@@ -14,6 +14,8 @@
 		4B10145A2141EF9D00E0E65C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4B1014582141EF9D00E0E65C /* LaunchScreen.storyboard */; };
 		4B1014632141F01C00E0E65C /* SetGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1014622141F01C00E0E65C /* SetGame.swift */; };
 		4B1014652141F04900E0E65C /* SetCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1014642141F04900E0E65C /* SetCard.swift */; };
+		4BEDA1AA216B0BDA00D11B1A /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEDA1A9216B0BDA00D11B1A /* Grid.swift */; };
+		4BEDA1AE216BD65300D11B1A /* SetCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEDA1AD216BD65300D11B1A /* SetCardView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +28,8 @@
 		4B10145B2141EF9D00E0E65C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4B1014622141F01C00E0E65C /* SetGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetGame.swift; sourceTree = "<group>"; };
 		4B1014642141F04900E0E65C /* SetCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetCard.swift; sourceTree = "<group>"; };
+		4BEDA1A9216B0BDA00D11B1A /* Grid.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
+		4BEDA1AD216BD65300D11B1A /* SetCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetCardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +65,8 @@
 				4B1014512141EF9C00E0E65C /* ViewController.swift */,
 				4B1014622141F01C00E0E65C /* SetGame.swift */,
 				4B1014642141F04900E0E65C /* SetCard.swift */,
+				4BEDA1AD216BD65300D11B1A /* SetCardView.swift */,
+				4BEDA1A9216B0BDA00D11B1A /* Grid.swift */,
 				4B1014532141EF9C00E0E65C /* Main.storyboard */,
 				4B10145B2141EF9D00E0E65C /* Info.plist */,
 				4B1014612141EFC200E0E65C /* Supporting Files */,
@@ -151,8 +157,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B1014522141EF9C00E0E65C /* ViewController.swift in Sources */,
+				4BEDA1AE216BD65300D11B1A /* SetCardView.swift in Sources */,
 				4B1014632141F01C00E0E65C /* SetGame.swift in Sources */,
 				4B1014652141F04900E0E65C /* SetCard.swift in Sources */,
+				4BEDA1AA216B0BDA00D11B1A /* Grid.swift in Sources */,
 				4B1014502141EF9C00E0E65C /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
