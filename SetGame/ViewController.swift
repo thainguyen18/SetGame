@@ -44,8 +44,8 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         
         // Start game with 12 cards
-        for _ in 1...12 {
-            addCard()
+        for _ in 1...4 {
+            dealMoreCards()
         }
         
         // Initially hide hint card
@@ -57,6 +57,7 @@ class ViewController: UIViewController {
         
         newGameButton.addTarget(self, action: #selector(self.touchNewGame), for: UIControl.Event.touchUpInside)
     }
+    
     
     @objc private func touchNewGame() {
         print("Touch new game")
@@ -72,8 +73,8 @@ class ViewController: UIViewController {
         game = SetGame() // Create new game object
         
         // Start game with 12 cards
-        for _ in 1...12 {
-            addCard()
+        for _ in 1...4 {
+            dealMoreCards()
         }
     }
     
@@ -91,10 +92,15 @@ class ViewController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        grid.frame = self.cardsHolderView.frame
-        
-        reLayoutCards()
+        if !shouldRelayoutCardsDueToAMatchReplacement {
+            
+            // Initial layout cards
+            grid.frame = self.cardsHolderView.frame
+            
+            reLayoutCards()
+        }
     }
+    
     
     @IBAction func showHintCard() {
         if let hintCard = game.hintCard() {
@@ -108,16 +114,13 @@ class ViewController: UIViewController {
     @IBAction func dealMoreCards() {
         if !game.isThereAMatch {
             for _ in 0...2 {
-                addCard()
+                let _ = addCard()
             }
             shouldShowHintButton()
+            
+            reLayoutCards()
         } else {
             replaceOrHideMatchedCards()
-            if (game.canStillDrawCards()) {
-                for _ in 0...2 {
-                    addCard()
-                }
-            }
         }
     }
     
@@ -149,22 +152,26 @@ class ViewController: UIViewController {
                         updateUIForMatch(isMatched: game.isThereAMatch)
                     }
                 }
+                shouldRelayoutCardsDueToAMatchReplacement = false
             case 3:
                 // If these cards are not a match
                 if !game.isThereAMatch {
                     deselectAll()
                     selectButton(cardButton: button)
+                    
+                    shouldRelayoutCardsDueToAMatchReplacement = false
                 } else {
                     // if a matched set, replace or hide them
                     if !selectedButtons.contains(button) {
                         replaceOrHideMatchedCards()
-                        if (game.canStillDrawCards()) { dealMoreCards() }
                         selectButton(cardButton: button)
                     }
                 }
             default: break
         }
     }
+    
+    private var shouldRelayoutCardsDueToAMatchReplacement = false
     
     private func replaceOrHideMatchedCards() {
         
@@ -177,7 +184,14 @@ class ViewController: UIViewController {
                 buttons.remove(at: index)
             }
             if (game.canStillDrawCards()) { //Replace cards
-                button.removeFromSuperview()
+                if let newButton = addCard() {
+                    newButton.frame = button.frame
+                    
+                    shouldRelayoutCardsDueToAMatchReplacement = true
+                    
+                    self.cardsHolderView.addSubview(newButton)
+                    button.removeFromSuperview()
+                }
             } else {
                 button.removeFromSuperview() // Or hide cards and relayout
                 reLayoutCards()
@@ -243,23 +257,19 @@ class ViewController: UIViewController {
         game.shuffleDeck()
         
         for _ in 1...noOfCardsOnScreen {
-            self.addCard()
+            let _ = addCard()
         }
         
         shouldShowHintButton()
+        
+        reLayoutCards()
     }
     
-    private func addCard() {
+    private func addCard() -> SetCardView? {
         
         if let setCard = game.draw() {
             
             if game.cards.isEmpty { self.DealMoreButton.isHidden = true }
-            
-//            let button = UIButton(type: .system)
-//            button.backgroundColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-//            button.layer.cornerRadius = 8.0
-//            button.setAttributedTitle(self.makeCardUI(card: setCard), for: UIControl.State.normal)
-//            button.addTarget(self, action: #selector(self.touchCardButton), for: UIControl.Event.touchUpInside)
             
             let button = SetCardView()
             button.setCard = setCard
@@ -268,12 +278,13 @@ class ViewController: UIViewController {
             button.isUserInteractionEnabled = true
             button.addGestureRecognizer(tap)
             
-            
             self.buttons.append(button)
             
             CardForButton.updateValue(setCard, forKey: button)
             
-            reLayoutCards()
+            return button
+        } else {
+            return nil
         }
     }
     
@@ -298,65 +309,8 @@ class ViewController: UIViewController {
             }
         }
     }
-    
-    
-    private func makeCardUI(card:SetCard) -> NSAttributedString {
-        var attributes = [NSAttributedString.Key:Any]()
-        attributes.updateValue(UIFont.systemFont(ofSize: 14.0), forKey: .font)
-        
-        var cardColor:UIColor
-        
-        var atrString:NSAttributedString
-        
-        switch card.color {
-            case .black:
-                attributes.updateValue(UIColor.black, forKey: .strokeColor)
-                cardColor = UIColor.black
-            case .orange:
-                attributes.updateValue(UIColor.orange, forKey: .strokeColor)
-                cardColor = UIColor.orange
-            case .blue:
-                attributes.updateValue(UIColor.blue, forKey: .strokeColor)
-                cardColor = UIColor.blue
-        }
-        
-        switch card.shading {
-            case .striped:
-                attributes.updateValue(cardColor.withAlphaComponent(0.10), forKey: .foregroundColor)
-                attributes.updateValue(-50.0, forKey: .strokeWidth)
-            case .filled:
-                attributes.updateValue(-50.0, forKey: .strokeWidth)
-            case .open: attributes.updateValue(5.0, forKey: .strokeWidth)
-        }
-        
-        var text = ""
-        
-        switch card.symbol {
-            case .triangle:
-                for _ in 1...card.number.rawValue {
-                    text.append("△")
-                }
-                atrString = NSAttributedString(string: text, attributes: attributes)
-            case .circle:
-                for _ in 1...card.number.rawValue {
-                    text.append("◯")
-                }
-                atrString = NSAttributedString(string: text, attributes: attributes)
-            case .square:
-                for _ in 1...card.number.rawValue {
-                    text.append("▢")
-                }
-                atrString = NSAttributedString(string: text, attributes: attributes)
-        }
-        return atrString
-    }
 }
 
-extension Double {
-    public static var random0and1:Double {
-        return Double(arc4random()) / 0xFFFFFFFF
-    }
-}
 
 extension CGRect {
     func offsetBy(dx: CGFloat, dy: CGFloat) -> CGRect {

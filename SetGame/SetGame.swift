@@ -52,6 +52,9 @@ struct SetGame {
     mutating func shuffleDeck() {
 
         cards = cards + cardsOnScreen
+        
+        // Remove all cards on screen to avoid wrong hint
+        cardsOnScreen.removeAll()
     }
     
     
