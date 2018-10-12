@@ -79,28 +79,50 @@ class ViewController: UIViewController {
     }
     
     private func setUpSwipeGesture() {
-        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(self.dealMoreCards))
+        let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(self.dealMoreCardsBySwipe(_:)))
         swipeDown.direction = .down
         self.view.addGestureRecognizer(swipeDown)
     }
     
     private func setUpRotationGesture() {
-        let rotationGesture = UIRotationGestureRecognizer(target: self, action: #selector(self.shuffleCards))
+        let rotationGesture = UIRotationGestureRecognizer(target: self, action:#selector(self.shuffleCardsByRotation(_:)))
         self.view.addGestureRecognizer(rotationGesture)
+    }
+    
+    @objc private func dealMoreCardsBySwipe(_ sender: UISwipeGestureRecognizer) {
+        switch sender.state {
+        case .ended:
+            self.dealMoreCards()
+        default:
+            break
+        }
+    }
+    
+    @objc private func shuffleCardsByRotation(_ sender: UISwipeGestureRecognizer) {
+        switch sender.state {
+        case .ended:
+            self.shuffleCards()
+        default:
+            break
+        }
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        if !shouldRelayoutCardsDueToAMatchReplacement {
+        if !shouldKeepRelayoutCardsDueToAMatchReplacement {
             
             // Initial layout cards
             grid.frame = self.cardsHolderView.frame
             
             reLayoutCards()
         }
+        
+        // if keep layout due to card replacement then enable rotation layout
+        if shouldKeepRelayoutCardsDueToAMatchReplacement {
+            shouldKeepRelayoutCardsDueToAMatchReplacement = !shouldKeepRelayoutCardsDueToAMatchReplacement
+        }
     }
-    
     
     @IBAction func showHintCard() {
         if let hintCard = game.hintCard() {
@@ -152,14 +174,14 @@ class ViewController: UIViewController {
                         updateUIForMatch(isMatched: game.isThereAMatch)
                     }
                 }
-                shouldRelayoutCardsDueToAMatchReplacement = false
+                shouldKeepRelayoutCardsDueToAMatchReplacement = false
             case 3:
                 // If these cards are not a match
                 if !game.isThereAMatch {
                     deselectAll()
                     selectButton(cardButton: button)
                     
-                    shouldRelayoutCardsDueToAMatchReplacement = false
+                    shouldKeepRelayoutCardsDueToAMatchReplacement = false
                 } else {
                     // if a matched set, replace or hide them
                     if !selectedButtons.contains(button) {
@@ -171,7 +193,7 @@ class ViewController: UIViewController {
         }
     }
     
-    private var shouldRelayoutCardsDueToAMatchReplacement = false
+    private var shouldKeepRelayoutCardsDueToAMatchReplacement = false
     
     private func replaceOrHideMatchedCards() {
         
@@ -187,9 +209,10 @@ class ViewController: UIViewController {
                 if let newButton = addCard() {
                     newButton.frame = button.frame
                     
-                    shouldRelayoutCardsDueToAMatchReplacement = true
+                    shouldKeepRelayoutCardsDueToAMatchReplacement = true
                     
                     self.cardsHolderView.addSubview(newButton)
+                    
                     button.removeFromSuperview()
                 }
             } else {
@@ -197,6 +220,7 @@ class ViewController: UIViewController {
                 reLayoutCards()
             }
         }
+        
         deselectAll()
             
         // Update score
