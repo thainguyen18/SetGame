@@ -12,14 +12,21 @@ class SetCardView: UIView {
     
     var setCard = SetCard() { didSet{ setNeedsDisplay() } }
     
+    var isFaceUp: Bool = false { didSet { setNeedsDisplay()} }
+    
     
     // Only override draw() if you perform custom drawing.
     // An empty implementation adversely affects performance during animation.
     override func draw(_ rect: CGRect) {
         // Drawing code
-        
-        let path = drawCard()
-        path.stroke()
+        if isFaceUp {
+            let path = drawCard()
+            path.stroke()
+        } else {
+            if let cardBackImage = UIImage(named: "cardback", in: Bundle(for: self.classForCoder), compatibleWith: traitCollection) {
+                cardBackImage.draw(in: bounds)
+            }
+        }
     }
     
     private func drawCard() -> UIBezierPath {
